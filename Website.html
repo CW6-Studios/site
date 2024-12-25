@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Placeholder</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.3.3/ScrollTrigger.min.js"></script>
 </head>
 <body>
     <header>
@@ -15,21 +17,12 @@
                 <canvas id="starsCanvas"></canvas>
                 <script src="main.js"></script>
                 <div class="container">
-                    <div class="stack" style="--stacks: 3; position: relative; z-index: 5;">
+                    <div class="stack" style="--stacks: 3;">
                       <span style="--index: 0;">PLACEHOLDER</span>
                       <span style="--index: 1;">PLACEHOLDER</span>
                       <span style="--index: 2;">PLACEHOLDER</span>
                     </div>
-                </div>
-
-                <!-- 3D Model Viewer -->
-                <model-viewer 
-                    src="models\walking-astronaut\source\Walkingastronaut.glb" 
-                    alt="A 3D animated model"
-                    auto-rotate 
-                    camera-controls 
-                    style="width: 100%; height: 400px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;">
-                </model-viewer>
+                  </div>
             </div>
             <nav>
                 <ul>
@@ -78,6 +71,15 @@
                 </form>
             </div>
         </section>
+
+        <section id="video-section">
+            <div id="container" class="container">
+                <video class="video-background" autoplay muted loop>
+                    <source src="astronaut.mp4" type="video/.mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -87,5 +89,73 @@
     </footer>
 
     <script src="main.js"></script>
+    <script>
+        $( document ).ready(function() {
+            console.clear();
+            $('video').addClass('video-background');
+
+            const video = document.querySelector(".video-background");
+            let src = video.currentSrc || video.src;
+            console.log(video, src);
+
+            /* Make sure the video is 'activated' on iOS */
+            function once(el, event, fn, opts) {
+              var onceFn = function (e) {
+                el.removeEventListener(event, onceFn);
+                fn.apply(this, arguments);
+              };
+              el.addEventListener(event, onceFn, opts);
+              return onceFn;
+            }
+
+            once(document.documentElement, "touchstart", function (e) {
+              video.play();
+              video.pause();
+            });
+
+            gsap.registerPlugin(ScrollTrigger);
+
+            let tl = gsap.timeline({
+              defaults: { duration: 1 },
+              scrollTrigger: {
+                trigger: "#container",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: true
+              }
+            });
+
+            once(video, "loadedmetadata", () => {
+              tl.fromTo(
+                video,
+                {
+                  currentTime: 0
+                },
+                {
+                  currentTime: video.duration || 1
+                }
+              );
+            });
+
+            setTimeout(function () {
+              if (window["fetch"]) {
+                fetch(src)
+                  .then((response) => response.blob())
+                  .then((response) => {
+                    var blobURL = URL.createObjectURL(response);
+
+                    var t = video.currentTime;
+                    once(document.documentElement, "touchstart", function (e) {
+                      video.play();
+                      video.pause();
+                    });
+
+                    video.setAttribute("src", blobURL);
+                    video.currentTime = t + 0.01;
+                  });
+              }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
